@@ -6,7 +6,7 @@ import (
 )
 
 type ResourceStack struct {
-	Input *model.MongoDBClusterKubernetesStackInput
+	Input *model.MongodbClusterKubernetesStackInput
 }
 
 func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
