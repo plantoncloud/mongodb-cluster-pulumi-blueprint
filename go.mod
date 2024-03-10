@@ -49,7 +49,7 @@ require (
 	google.golang.org/grpc v1.59.0 // indirect
 )
 
-require github.com/plantoncloud/planton-cloud-apis v0.0.109
+require github.com/plantoncloud/planton-cloud-apis v0.0.132
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231115204500-e097f827e652.2 // indirect
