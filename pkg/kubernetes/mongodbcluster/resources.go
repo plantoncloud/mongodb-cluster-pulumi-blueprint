@@ -26,7 +26,7 @@ func Resources(ctx *pulumi.Context, input *Input) error {
 }
 
 func addHelmChart(ctx *pulumi.Context, input *Input) error {
-	var helmValues = getHelmValues(input.ContainerSpec, input.Values)
+	var helmValues = getHelmValues(input.ContainerSpec, input.Values, input.Labels)
 	// Deploying a Locust Helm chart from the Helm repository.
 	_, err := helmv3.NewChart(ctx, input.MongodbClusterId, helmv3.ChartArgs{
 		Chart:     pulumi.String("mongodb"),

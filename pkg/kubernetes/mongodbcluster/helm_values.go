@@ -6,7 +6,7 @@ import (
 )
 
 func getHelmValues(containerSpec *plantoncloudmongodbmodel.MongodbClusterSpecKubernetesSpecMongodbContainerSpec,
-	customValues map[string]string) pulumi.Map {
+	customValues map[string]string, labels map[string]string) pulumi.Map {
 	// https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
 	var baseValues = pulumi.Map{
 		"resources": convertResources(containerSpec.Resources),
@@ -17,6 +17,8 @@ func getHelmValues(containerSpec *plantoncloudmongodbmodel.MongodbClusterSpecKub
 			"enabled": pulumi.Bool(containerSpec.IsPersistenceEnabled),
 			"size":    pulumi.String(containerSpec.DiskSize),
 		},
+		"podLabels":    pulumi.ToStringMap(labels),
+		"commonLabels": pulumi.ToStringMap(labels),
 	}
 	mergeHelmValuesMap(baseValues, customValues)
 	return baseValues
