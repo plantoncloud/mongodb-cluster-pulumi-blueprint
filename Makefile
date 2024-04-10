@@ -16,7 +16,11 @@ clean:
 	rm -rf ${build_dir}
 
 .PHONY: build
-build: clean deps vet fmt
+build: clean deps vet fmt test
+
+.PHONY: test
+test:
+	go test -v ./...
 
 .PHONY: update-deps
 update-deps:
