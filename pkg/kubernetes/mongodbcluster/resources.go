@@ -9,6 +9,8 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
+const rootUsername = "root"
+
 type Input struct {
 	AddedNamespace   *kubernetescorev1.Namespace
 	MongodbClusterId string
@@ -44,16 +46,12 @@ func addHelmChart(ctx *pulumi.Context, input *Input) error {
 		return err
 	}
 	ctx.Export(GetRootPasswordOutputName(), pulumi.String(GetRootPasswordSecretName(input.MongodbClusterId)))
-	ctx.Export(GetRootUsernameOutputName(), pulumi.String(GetRootUsernameSecretName()))
+	ctx.Export(GetRootUsernameOutputName(), pulumi.String(rootUsername))
 	return nil
 }
 
 func GetRootUsernameOutputName() string {
 	return custom.Name("mongodb-cluster-root-username")
-}
-
-func GetRootUsernameSecretName() string {
-	return custom.Name("root")
 }
 
 func GetRootPasswordOutputName() string {
