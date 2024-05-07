@@ -17,8 +17,9 @@ func getHelmValues(containerSpec *plantoncloudmongodbmodel.MongodbClusterSpecKub
 			"enabled": pulumi.Bool(containerSpec.IsPersistenceEnabled),
 			"size":    pulumi.String(containerSpec.DiskSize),
 		},
-		"podLabels":    pulumi.ToStringMap(labels),
-		"commonLabels": pulumi.ToStringMap(labels),
+		"podLabels":      pulumi.ToStringMap(labels),
+		"commonLabels":   pulumi.ToStringMap(labels),
+		"useStatefulSet": pulumi.Bool(true),
 	}
 	mergeHelmValuesMap(baseValues, customValues)
 	return baseValues
