@@ -25,4 +25,5 @@ test:
 .PHONY: update-deps
 update-deps:
 	go get github.com/plantoncloud/planton-cloud-apis@latest
-	go get github.com/plantoncloud/pulumi-stack-runner-go-sdk
+	go get github.com/plantoncloud/pulumi-stack-runner-go-sdk@latest
+	go get github.com/plantoncloud/pulumi-blueprint-commons@latest
