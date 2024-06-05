@@ -32,7 +32,7 @@ func addExternal(ctx *pulumi.Context) error {
 	hostname := mongodbnetutilshostname.GetExternalHostname(resourceId, ctxConfig.Spec.EnvironmentInfo.EnvironmentName, ctxConfig.Spec.EndpointDomainName)
 	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
 		mongodbloadbalancercommon.ExternalLoadBalancerServiceName,
-		getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.ExternalLoadBalancerServiceName, hostname, nameSpace), pulumi.Parent(nameSpace))
+		getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.ExternalLoadBalancerServiceName, hostname), pulumi.Parent(nameSpace))
 	if err != nil {
 		return errors.Wrap(err, "failed to create kubernetes service of type load balancer")
 	}
@@ -62,7 +62,7 @@ func addInternal(ctx *pulumi.Context) error {
 }
 
 func getInternalLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, hostname string, namespace *pulumikubernetescorev1.Namespace) *pulumikubernetescorev1.ServiceArgs {
-	resp := getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.InternalLoadBalancerServiceName, hostname, namespace)
+	resp := getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.InternalLoadBalancerServiceName, hostname)
 	resp.Metadata = &v1.ObjectMetaArgs{
 		Name:      pulumi.String(mongodbloadbalancercommon.InternalLoadBalancerServiceName),
 		Namespace: namespace.Metadata.Name(),
@@ -76,12 +76,12 @@ func getInternalLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextCo
 	return resp
 }
 
-func getLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, serviceName, hostname string, namespace *pulumikubernetescorev1.Namespace) *pulumikubernetescorev1.ServiceArgs {
+func getLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, serviceName string, hostname string) *pulumikubernetescorev1.ServiceArgs {
 	return &pulumikubernetescorev1.ServiceArgs{
 		Metadata: &v1.ObjectMetaArgs{
 			Name:      pulumi.String(serviceName),
-			Namespace: namespace.Metadata.Name(),
-			Labels:    namespace.Metadata.Labels(),
+			Namespace: ctxConfig.Status.AddedResources.Namespace.Metadata.Name(),
+			Labels:    ctxConfig.Status.AddedResources.Namespace.Metadata.Labels(),
 			Annotations: pulumi.StringMap{
 				"planton.cloud/endpoint-domain-name":        pulumi.String(ctxConfig.Spec.EndpointDomainName),
 				"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname)}},
@@ -97,8 +97,8 @@ func getLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, se
 			},
 			Selector: pulumi.StringMap{
 				"app.kubernetes.io/component": pulumi.String("mongodb"),
-				"app.kubernetes.io/instance":  namespace.Metadata.Name().Elem(),
-				"app.kubernetes.io/name":      pulumi.String("mongodb"),
+				"app.kubernetes.io/instance":  pulumi.String(ctxConfig.Spec.ResourceId),
+				"app.kubernetes.io/name":      pulumi.String(ctxConfig.Spec.ResourceName),
 			},
 		},
 	}
