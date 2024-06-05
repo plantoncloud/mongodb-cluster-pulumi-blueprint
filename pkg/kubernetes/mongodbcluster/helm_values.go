@@ -15,8 +15,9 @@ func getHelmValues(ctx *pulumi.Context, containerSpec *plantoncloudmongodbmodel.
 
 	// https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
 	var baseValues = pulumi.Map{
-		"nameOverride": pulumi.String(ctxConfig.Spec.ResourceName),
-		"resources":    containerresources.ConvertToPulumiMap(containerSpec.Resources),
+		"nameOverride":     pulumi.String(ctxConfig.Spec.ResourceName),
+		"fullnameOverride": pulumi.String(ctxConfig.Spec.ResourceName),
+		"resources":        containerresources.ConvertToPulumiMap(containerSpec.Resources),
 		// todo: hard-coding this to 1 since we are only using `standalone` architecture,
 		// need to revisit this to handle `replicaSet` architecture
 		"replicaCount": pulumi.Int(1),
