@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/plantoncloud-inc/go-commons/kubernetes/manifest"
-	"github.com/plantoncloud/environment-pulumi-blueprint/pkg/gcpgke/endpointdomains/cert"
 	"github.com/plantoncloud/kube-cluster-pulumi-blueprint/pkg/gcp/container/addon/istio/ingress/controller"
 	ingressnamespace "github.com/plantoncloud/kube-cluster-pulumi-blueprint/pkg/gcp/container/addon/istio/ingress/namespace"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -103,11 +102,8 @@ func buildGatewayObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v1beta1.
 						Protocol: "TLS",
 						Name:     MongodbGatewayIdentifier,
 					},
-					Hosts: []string{ctxConfig.Status.OutputValues.IngressEndpoint},
-					Tls: &networkingv1beta1.ServerTLSSettings{
-						Mode:           networkingv1beta1.ServerTLSSettings_SIMPLE,
-						CredentialName: cert.GetCertSecretName(ctxConfig.Spec.EnvDomainName),
-					},
+					Hosts: []string{"*"},
+					Tls:   &networkingv1beta1.ServerTLSSettings{},
 				},
 			},
 		},

@@ -2,10 +2,10 @@ package virtualservice
 
 import (
 	"fmt"
-	mongodbnetutilport "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/port"
-	mongodbnetutilservice "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/service"
-
+	plantongocommonsdns "github.com/plantoncloud-inc/go-commons/kubernetes/network/dns"
 	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
+	"github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/istio/stunnel"
+	mongodbnetutilport "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/port"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -79,7 +79,7 @@ func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v
 
 	var resourceId = ctxConfig.Spec.ResourceId
 	var resourceName = ctxConfig.Spec.ResourceName
-	var nameSpaceName = ctxConfig.Spec.NamespaceName
+	var namespaceName = ctxConfig.Spec.NamespaceName
 	var hostNames = []string{ctxConfig.Status.OutputValues.IngressEndpoint}
 
 	return &v1beta1.VirtualService{
@@ -89,21 +89,22 @@ func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v
 		},
 		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      resourceName,
-			Namespace: nameSpaceName,
+			Namespace: namespaceName,
 		},
 		Spec: networkingv1beta1.VirtualService{
 			Gateways: []string{fmt.Sprintf("%s/%s", ingressnamespace.Name, resourceId)},
 			Hosts:    hostNames,
-			Tcp: []*networkingv1beta1.TCPRoute{{
-				Match: []*networkingv1beta1.L4MatchAttributes{
+			Tls: []*networkingv1beta1.TLSRoute{{
+				Match: []*networkingv1beta1.TLSMatchAttributes{
 					{
-						Port: mongodbnetutilport.MongoDbPort,
+						Port:     mongodbnetutilport.MongoDbPort,
+						SniHosts: hostNames,
 					},
 				},
 				Route: []*networkingv1beta1.RouteDestination{
 					{
 						Destination: &networkingv1beta1.Destination{
-							Host: mongodbnetutilservice.GetKubeServiceNameFqdn(resourceName, nameSpaceName),
+							Host: fmt.Sprintf("%s.%s.%s", stunnel.StunnelServiceName, namespaceName, plantongocommonsdns.DefaultDomain),
 							Port: &networkingv1beta1.PortSelector{
 								Number: mongodbnetutilport.MongoDbPort,
 							},

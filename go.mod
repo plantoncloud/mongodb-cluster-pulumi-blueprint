@@ -52,6 +52,7 @@ require (
 )
 
 require (
+	github.com/cert-manager/cert-manager v1.13.2
 	github.com/plantoncloud-inc/go-commons v0.0.431
 	github.com/plantoncloud/environment-pulumi-blueprint v0.0.0-20240310194959-9094df3f0bc2
 	github.com/plantoncloud/kube-cluster-pulumi-blueprint v0.0.0-20240310194535-306b2b154436
@@ -118,7 +119,6 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
-	github.com/cert-manager/cert-manager v1.13.2 // indirect
 	github.com/charmbracelet/bubbles v0.16.1 // indirect
 	github.com/charmbracelet/bubbletea v0.24.2 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1 // indirect
