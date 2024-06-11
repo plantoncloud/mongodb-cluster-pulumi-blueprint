@@ -24,7 +24,6 @@ const (
 )
 
 func Resources(ctx *pulumi.Context) error {
-
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
 	gatewayObject := buildGatewayObject(&ctxConfig)
@@ -35,7 +34,8 @@ func Resources(ctx *pulumi.Context) error {
 	}
 
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName,
-		&pulumik8syaml.ConfigFileArgs{File: manifestPath}, pulumi.Provider(ctxConfig.Spec.KubeProvider))
+		&pulumik8syaml.ConfigFileArgs{File: manifestPath},
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Provider(ctxConfig.Spec.KubeProvider))
 	if err != nil {
 		return errors.Wrap(err, "failed to add gateway manifest")
 	}

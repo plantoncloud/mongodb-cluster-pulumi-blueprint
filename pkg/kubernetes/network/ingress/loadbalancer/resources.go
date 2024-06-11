@@ -14,14 +14,14 @@ type Input struct {
 	EndpointDomainName string
 }
 
-func Resources(ctx *pulumi.Context) error {
-
+func Resources(ctx *pulumi.Context) (newCtx *pulumi.Context, err error) {
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
 	if ctxConfig.Spec.EnvironmentInfo.KubernetesProvider == kubernetesprovider.KubernetesProvider_gcp_gke {
-		if err := gcp.Resources(ctx); err != nil {
-			return errors.Wrap(err, "failed to create load balancer resources for gke cluster")
+		ctx, err = gcp.Resources(ctx)
+		if err != nil {
+			return ctx, errors.Wrap(err, "failed to create load balancer resources for gke cluster")
 		}
 	}
-	return nil
+	return ctx, nil
 }

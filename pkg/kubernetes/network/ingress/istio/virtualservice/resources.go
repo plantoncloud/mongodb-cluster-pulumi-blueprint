@@ -2,8 +2,8 @@ package virtualservice
 
 import (
 	"fmt"
-	mongodbnetutilport "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/port"
 	mongodbnetutilservice "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/service"
+	"github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/outputs"
 
 	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
 	"path/filepath"
@@ -39,7 +39,7 @@ func addVirtualService(ctx *pulumi.Context, virtualServiceObject *v1beta1.Virtua
 	}
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{
 		File: manifestPath,
-	}, pulumi.DependsOn([]pulumi.Resource{nameSpace}), pulumi.Parent(nameSpace))
+	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.DependsOn([]pulumi.Resource{nameSpace}), pulumi.Parent(nameSpace))
 	if err != nil {
 		return errors.Wrap(err, "failed to add virtual-service manifest")
 	}
@@ -97,7 +97,7 @@ func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v
 			Tcp: []*networkingv1beta1.TCPRoute{{
 				Match: []*networkingv1beta1.L4MatchAttributes{
 					{
-						Port: mongodbnetutilport.MongoDbPort,
+						Port: outputs.MongoDbPort,
 					},
 				},
 				Route: []*networkingv1beta1.RouteDestination{
@@ -105,7 +105,7 @@ func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v
 						Destination: &networkingv1beta1.Destination{
 							Host: mongodbnetutilservice.GetKubeServiceNameFqdn(resourceName, nameSpaceName),
 							Port: &networkingv1beta1.PortSelector{
-								Number: mongodbnetutilport.MongoDbPort,
+								Number: outputs.MongoDbPort,
 							},
 						},
 					},

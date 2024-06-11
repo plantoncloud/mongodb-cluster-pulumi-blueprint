@@ -10,21 +10,22 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func Resources(ctx *pulumi.Context) error {
+func Resources(ctx *pulumi.Context) (newCtx *pulumi.Context, err error) {
 
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 	var ingressType = ctxConfig.Spec.IngressType
 	switch ingressType {
 	case kubernetesworkloadingresstype.KubernetesWorkloadIngressType_load_balancer:
-		if err := mongodbloadbalancer.Resources(ctx); err != nil {
-			return errors.Wrap(err, "failed to add load balancer resources")
+		ctx, err = mongodbloadbalancer.Resources(ctx)
+		if err != nil {
+			return ctx, errors.Wrap(err, "failed to add load balancer resources")
 		}
 	case kubernetesworkloadingresstype.KubernetesWorkloadIngressType_ingress_controller:
-		if err := mongodbistio.Resources(ctx); err != nil {
-			return errors.Wrap(err, "failed to add istio resources")
+		if err = mongodbistio.Resources(ctx); err != nil {
+			return ctx, errors.Wrap(err, "failed to add istio resources")
 		}
 	}
 
 	mongodbnetutilsendpoint.Resources(ctx)
-	return nil
+	return ctx, nil
 }
