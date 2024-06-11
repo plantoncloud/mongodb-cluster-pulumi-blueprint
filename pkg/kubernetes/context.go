@@ -76,7 +76,7 @@ func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*mongodbcont
 				KubeEndpoint:       mongodbnetutilsservice.GetKubeServiceNameFqdn(resourceName, resourceId),
 				KubeForwardCommand: getKubePortForwardCommand(resourceId, resourceName),
 				RootUsername:       rootUsername,
-				RootPasswordSecret: GetRootPasswordSecretName(resourceId),
+				RootPasswordSecret: resourceName,
 			},
 		},
 	}, nil
@@ -133,8 +133,4 @@ func GetRootUsernameOutputName() string {
 
 func GetRootPasswordOutputName() string {
 	return custom.Name("mongodb-cluster-root-password-secret-name")
-}
-
-func GetRootPasswordSecretName(mongodbClusterId string) string {
-	return fmt.Sprintf("%s-mongodb", mongodbClusterId)
 }
