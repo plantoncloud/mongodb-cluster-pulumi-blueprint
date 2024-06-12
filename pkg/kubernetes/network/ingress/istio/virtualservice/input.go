@@ -11,7 +11,7 @@ type input struct {
 	Namespace         *kubernetescorev1.Namespace
 	HostNames         []string
 	WorkspaceDir      string
-	NameSpaceName     string
+	NamespaceName     string
 	KubeLocalEndpoint string
 	KubeServiceName   string
 }
@@ -24,7 +24,7 @@ func extractInput(ctx *pulumi.Context) *input {
 		Namespace:         ctxConfig.Status.AddedResources.Namespace,
 		HostNames:         []string{ctxConfig.Spec.ExternalHostname},
 		WorkspaceDir:      ctxConfig.Spec.WorkspaceDir,
-		NameSpaceName:     ctxConfig.Spec.NamespaceName,
+		NamespaceName:     ctxConfig.Spec.NamespaceName,
 		KubeLocalEndpoint: ctxConfig.Spec.KubeLocalEndpoint,
 		KubeServiceName:   ctxConfig.Spec.KubeServiceName,
 	}

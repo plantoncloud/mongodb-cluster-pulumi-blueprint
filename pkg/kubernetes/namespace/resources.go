@@ -16,7 +16,7 @@ func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
-	addNameSpaceToContext(&ctxConfig, namespace)
+	addNamespaceToContext(&ctxConfig, namespace)
 	ctx = ctx.WithValue(mongodbcontextconfig.Key, ctxConfig)
 	return ctx, nil
 }
@@ -39,7 +39,7 @@ func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
 	return ns, nil
 }
 
-func addNameSpaceToContext(existingConfig *mongodbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
+func addNamespaceToContext(existingConfig *mongodbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
 	if existingConfig.Status.AddedResources == nil {
 		existingConfig.Status.AddedResources = &mongodbcontextconfig.AddedResources{
 			Namespace: namespace,

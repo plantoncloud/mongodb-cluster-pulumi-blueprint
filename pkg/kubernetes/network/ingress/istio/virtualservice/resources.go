@@ -77,7 +77,7 @@ func buildVirtualServiceObject(i *input) *v1beta1.VirtualService {
 		},
 		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      i.KubeServiceName,
-			Namespace: i.NameSpaceName,
+			Namespace: i.NamespaceName,
 		},
 		Spec: networkingv1beta1.VirtualService{
 			Gateways: []string{fmt.Sprintf("%s/%s", ingressnamespace.Name, i.ResourceId)},

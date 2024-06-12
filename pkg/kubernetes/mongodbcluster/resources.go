@@ -1,25 +1,19 @@
 package mongodbcluster
 
 import (
-	plantoncloudmongodbmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/mongodbcluster/model"
 	helmv3 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/helm/v3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type Input struct {
-	ContainerSpec *plantoncloudmongodbmodel.MongodbClusterSpecKubernetesSpecMongodbContainerSpec
-	Values        map[string]string
-}
-
-func Resources(ctx *pulumi.Context, input *Input) error {
-	err := addHelmChart(ctx, input)
+func Resources(ctx *pulumi.Context) error {
+	err := addHelmChart(ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func addHelmChart(ctx *pulumi.Context, input *Input) error {
+func addHelmChart(ctx *pulumi.Context) error {
 	var i = extractInput(ctx)
 
 	var helmValues = getHelmValues(i)
