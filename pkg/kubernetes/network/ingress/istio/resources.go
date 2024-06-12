@@ -13,7 +13,7 @@ func Resources(ctx *pulumi.Context) error {
 		return errors.Wrap(err, "failed to add gateway resources")
 	}
 	if err := mongodbistiovirtualservice.Resources(ctx); err != nil {
-		return errors.Wrap(err, "failed to add gateway resources")
+		return errors.Wrap(err, "failed to add virtual-service resources")
 	}
 	return nil
 }

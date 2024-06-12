@@ -5,7 +5,6 @@ import (
 	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
 	mongodbistio "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/istio"
 	mongodbloadbalancer "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/loadbalancer"
-	mongodbnetutilsendpoint "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/endpoint"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubecluster/enums/kubernetesworkloadingresstype"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -25,7 +24,5 @@ func Resources(ctx *pulumi.Context) (newCtx *pulumi.Context, err error) {
 			return ctx, errors.Wrap(err, "failed to add istio resources")
 		}
 	}
-
-	mongodbnetutilsendpoint.Resources(ctx)
 	return ctx, nil
 }

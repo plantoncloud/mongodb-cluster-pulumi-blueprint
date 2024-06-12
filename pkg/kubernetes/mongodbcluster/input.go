@@ -8,9 +8,9 @@ import (
 )
 
 type input struct {
-	Namespace        *kubernetescorev1.Namespace
 	ResourceId       string
-	ResourceName     string
+	Namespace        *kubernetescorev1.Namespace
+	KubeServiceName  string
 	ContainerSpec    *plantoncloudmongodbmodel.MongodbClusterSpecKubernetesSpecMongodbContainerSpec
 	CustomHelmValues map[string]string
 	Labels           map[string]string
@@ -20,11 +20,11 @@ func extractInput(ctx *pulumi.Context) *input {
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
 	return &input{
-		Namespace:        ctxConfig.Status.AddedResources.Namespace,
 		ResourceId:       ctxConfig.Spec.ResourceId,
-		ResourceName:     ctxConfig.Spec.ResourceName,
+		Namespace:        ctxConfig.Status.AddedResources.Namespace,
 		ContainerSpec:    ctxConfig.Spec.ContainerSpec,
 		CustomHelmValues: ctxConfig.Spec.CustomHelmValues,
 		Labels:           ctxConfig.Spec.Labels,
+		KubeServiceName:  ctxConfig.Spec.KubeServiceName,
 	}
 }

@@ -2,8 +2,6 @@ package outputs
 
 import (
 	"fmt"
-	mongodbnetutilshostname "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/hostname"
-	mongodbnetutilsservice "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/service"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/output/custom"
 	puluminamekubeoutput "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/provider/kubernetes/output"
@@ -13,13 +11,11 @@ import (
 
 func Export(ctx *pulumi.Context) error {
 	var i = extractInput(ctx)
-	var ingressEndpoint = mongodbnetutilshostname.GetExternalHostname(i.ResourceId, i.EnvironmentName, i.EndpointDomainName)
-	var kubeEndpoint = mongodbnetutilsservice.GetKubeServiceNameFqdn(i.ResourceName, i.ResourceId)
 	var kubePortForwardCommand = getKubePortForwardCommand(i.NamespaceName, i.ResourceName)
-	var kubeServiceName = mongodbnetutilsservice.GetKubeServiceName(i.ResourceName)
-	ctx.Export(GetIngressEndpointOutputName(), pulumi.String(ingressEndpoint))
-	ctx.Export(GetKubeServiceNameOutputName(), pulumi.String(kubeServiceName))
-	ctx.Export(GetKubeEndpointOutputName(), pulumi.String(kubeEndpoint))
+
+	ctx.Export(GetIngressEndpointOutputName(), pulumi.String(i.ExternalHostname))
+	ctx.Export(GetKubeServiceNameOutputName(), pulumi.String(i.KubeServiceName))
+	ctx.Export(GetKubeEndpointOutputName(), pulumi.String(i.KubeLocalEndpoint))
 	ctx.Export(GetKubePortForwardCommandOutputName(), pulumi.String(kubePortForwardCommand))
 	ctx.Export(GetExternalLoadBalancerIp(), pulumi.String(i.ExternalLoadBalancerIpAddress))
 	ctx.Export(GetInternalLoadBalancerIp(), pulumi.String(i.InternalLoadBalancerIpAddress))

@@ -2,8 +2,6 @@ package gateway
 
 import (
 	"fmt"
-	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
-
 	pulumik8syaml "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/yaml"
 	"path/filepath"
 
@@ -24,18 +22,18 @@ const (
 )
 
 func Resources(ctx *pulumi.Context) error {
-	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
+	var i = extractInput(ctx)
 
-	gatewayObject := buildGatewayObject(&ctxConfig)
+	gatewayObject := buildGatewayObject(i)
 	resourceName := fmt.Sprintf("gateway-%s", gatewayObject.Name)
-	manifestPath := filepath.Join(ctxConfig.Spec.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
+	manifestPath := filepath.Join(i.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
 	if err := manifest.Create(manifestPath, gatewayObject); err != nil {
 		return errors.Wrapf(err, "failed to create %s manifest file", manifestPath)
 	}
 
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName,
 		&pulumik8syaml.ConfigFileArgs{File: manifestPath},
-		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Provider(ctxConfig.Spec.KubeProvider))
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Provider(i.KubeProvider))
 	if err != nil {
 		return errors.Wrap(err, "failed to add gateway manifest")
 	}
@@ -47,12 +45,19 @@ apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
 
-	creationTimestamp: "2023-08-23T22:12:03Z"
+	creationTimestamp: "2024-06-11T05:08:14Z"
 	generation: 1
-	name: prod-planton-live
+	labels:
+	  planton.cloud/company: planton
+	  planton.cloud/environment: planton-cloud-prod
+	  planton.cloud/product: planton-cloud
+	  planton.cloud/resource: "true"
+	  planton.cloud/resource-id: mdb-planton-cloud-prod-test-ingress-controller
+	  planton.cloud/resource-kind: mongodb_cluster
+	name: mdb-planton-cloud-prod-test-ingress-controller
 	namespace: istio-ingress
-	resourceVersion: "69782222"
-	uid: 69d1b8e1-ad08-4915-8412-be7d6e1a3d18
+	resourceVersion: "287570172"
+	uid: 65e9a0a6-9dba-48ad-8ce6-55b52395c8da
 
 spec:
 
@@ -61,37 +66,26 @@ spec:
 	  istio: ingress
 	servers:
 	- hosts:
-	  - '*.prod.planton.live'
-	  - prod.planton.live
-	  name: http
+	  - mdb-planton-cloud-prod-test-ingress-controller.prod.planton.live
+	  name: mongodb
 	  port:
-	    name: http
-	    number: 80
-	    protocol: HTTP
-	  tls:
-	    httpsRedirect: true
-	- hosts:
-	  - '*.prod.planton.live'
-	  - prod.planton.live
-	  name: https
-	  port:
-	    name: https
-	    number: 443
-	    protocol: HTTPS
+	    name: mongodb
+	    number: 27017
+	    protocol: TLS
 	  tls:
 	    credentialName: cert-prod-planton-live
 	    mode: SIMPLE
 */
-func buildGatewayObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v1beta1.Gateway {
+func buildGatewayObject(i *input) *v1beta1.Gateway {
 	return &v1beta1.Gateway{
 		TypeMeta: k8smetav1.TypeMeta{
 			APIVersion: "networking.istio.io/v1beta1",
 			Kind:       "Gateway",
 		},
 		ObjectMeta: k8smetav1.ObjectMeta{
-			Name:      ctxConfig.Spec.ResourceId,
+			Name:      i.ResourceId,
 			Namespace: ingressnamespace.Name,
-			Labels:    ctxConfig.Spec.Labels,
+			Labels:    i.Labels,
 		},
 		Spec: networkingv1beta1.Gateway{
 			Selector: controller.SelectorLabels,
@@ -103,10 +97,10 @@ func buildGatewayObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v1beta1.
 						Protocol: "TLS",
 						Name:     MongodbGatewayIdentifier,
 					},
-					Hosts: []string{ctxConfig.Status.OutputValues.IngressEndpoint},
+					Hosts: []string{i.ExternalHostname},
 					Tls: &networkingv1beta1.ServerTLSSettings{
 						Mode:           networkingv1beta1.ServerTLSSettings_SIMPLE,
-						CredentialName: cert.GetCertSecretName(ctxConfig.Spec.EnvDomainName),
+						CredentialName: cert.GetCertSecretName(i.EnvDomainName),
 					},
 				},
 			},

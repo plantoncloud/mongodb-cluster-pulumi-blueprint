@@ -31,6 +31,10 @@ type Spec struct {
 	EnvDomainName      string
 	ContainerSpec      *plantoncloudmongodbmodel.MongodbClusterSpecKubernetesSpecMongodbContainerSpec
 	CustomHelmValues   map[string]string
+	InternalHostname   string
+	ExternalHostname   string
+	KubeServiceName    string
+	KubeLocalEndpoint  string
 }
 
 type Status struct {

@@ -2,10 +2,8 @@ package virtualservice
 
 import (
 	"fmt"
-	mongodbnetutilservice "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/service"
 	"github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/outputs"
 
-	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -19,27 +17,23 @@ import (
 )
 
 func Resources(ctx *pulumi.Context) error {
-	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
-	var virtualServiceObject = buildVirtualServiceObject(&ctxConfig)
-	if err := addVirtualService(ctx, virtualServiceObject); err != nil {
+	if err := addVirtualService(ctx); err != nil {
 		return errors.Wrap(err, "failed to add external virtual service")
 	}
 	return nil
 }
 
-func addVirtualService(ctx *pulumi.Context, virtualServiceObject *v1beta1.VirtualService) error {
-	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
-	var workspaceDir = ctxConfig.Spec.WorkspaceDir
-	var nameSpace = ctxConfig.Status.AddedResources.Namespace
-
+func addVirtualService(ctx *pulumi.Context) error {
+	i := extractInput(ctx)
+	var virtualServiceObject = buildVirtualServiceObject(i)
 	resourceName := fmt.Sprintf("virtual-service-%s", virtualServiceObject.Name)
-	manifestPath := filepath.Join(workspaceDir, fmt.Sprintf("%s.yaml", resourceName))
+	manifestPath := filepath.Join(i.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
 	if err := manifest.Create(manifestPath, virtualServiceObject); err != nil {
 		return errors.Wrapf(err, "failed to create %s manifest file", manifestPath)
 	}
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{
 		File: manifestPath,
-	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.DependsOn([]pulumi.Resource{nameSpace}), pulumi.Parent(nameSpace))
+	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.DependsOn([]pulumi.Resource{i.Namespace}), pulumi.Parent(i.Namespace))
 	if err != nil {
 		return errors.Wrap(err, "failed to add virtual-service manifest")
 	}
@@ -75,25 +69,19 @@ metadata:
   resourceVersion: ""
 */
 
-func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v1beta1.VirtualService {
-
-	var resourceId = ctxConfig.Spec.ResourceId
-	var resourceName = ctxConfig.Spec.ResourceName
-	var nameSpaceName = ctxConfig.Spec.NamespaceName
-	var hostNames = []string{ctxConfig.Status.OutputValues.IngressEndpoint}
-
+func buildVirtualServiceObject(i *input) *v1beta1.VirtualService {
 	return &v1beta1.VirtualService{
 		TypeMeta: k8smetav1.TypeMeta{
 			APIVersion: "networking.istio.io/v1beta1",
 			Kind:       "VirtualService",
 		},
 		ObjectMeta: k8smetav1.ObjectMeta{
-			Name:      resourceName,
-			Namespace: nameSpaceName,
+			Name:      i.KubeServiceName,
+			Namespace: i.NameSpaceName,
 		},
 		Spec: networkingv1beta1.VirtualService{
-			Gateways: []string{fmt.Sprintf("%s/%s", ingressnamespace.Name, resourceId)},
-			Hosts:    hostNames,
+			Gateways: []string{fmt.Sprintf("%s/%s", ingressnamespace.Name, i.ResourceId)},
+			Hosts:    i.HostNames,
 			Tcp: []*networkingv1beta1.TCPRoute{{
 				Match: []*networkingv1beta1.L4MatchAttributes{
 					{
@@ -103,7 +91,7 @@ func buildVirtualServiceObject(ctxConfig *mongodbcontextconfig.ContextConfig) *v
 				Route: []*networkingv1beta1.RouteDestination{
 					{
 						Destination: &networkingv1beta1.Destination{
-							Host: mongodbnetutilservice.GetKubeServiceNameFqdn(resourceName, nameSpaceName),
+							Host: i.KubeLocalEndpoint,
 							Port: &networkingv1beta1.PortSelector{
 								Number: outputs.MongoDbPort,
 							},

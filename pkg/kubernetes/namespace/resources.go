@@ -2,7 +2,6 @@ package namespace
 
 import (
 	"github.com/pkg/errors"
-	gcpkubernetes "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes"
 	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
@@ -17,7 +16,7 @@ func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
-	gcpkubernetes.AddNameSpaceToContext(&ctxConfig, namespace)
+	addNameSpaceToContext(&ctxConfig, namespace)
 	ctx = ctx.WithValue(mongodbcontextconfig.Key, ctxConfig)
 	return ctx, nil
 }
@@ -38,4 +37,14 @@ func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
 		return nil, errors.Wrapf(err, "failed to add %s namespace", i.NamespaceName)
 	}
 	return ns, nil
+}
+
+func addNameSpaceToContext(existingConfig *mongodbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &mongodbcontextconfig.AddedResources{
+			Namespace: namespace,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.Namespace = namespace
 }

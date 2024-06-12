@@ -17,9 +17,12 @@ type input struct {
 	EnvironmentName               string
 	EndpointDomainName            string
 	NamespaceName                 string
-	IsIngressEnabled              bool
 	ExternalLoadBalancerIpAddress string
 	InternalLoadBalancerIpAddress string
+	InternalHostname              string
+	ExternalHostname              string
+	KubeServiceName               string
+	KubeLocalEndpoint             string
 }
 
 func extractInput(ctx *pulumi.Context) *input {
@@ -41,8 +44,11 @@ func extractInput(ctx *pulumi.Context) *input {
 		EnvironmentName:               ctxConfig.Spec.EnvironmentInfo.EnvironmentName,
 		EndpointDomainName:            ctxConfig.Spec.EndpointDomainName,
 		NamespaceName:                 ctxConfig.Spec.NamespaceName,
-		IsIngressEnabled:              ctxConfig.Spec.IsIngressEnabled,
 		ExternalLoadBalancerIpAddress: externalLoadBalancerIpAddress,
 		InternalLoadBalancerIpAddress: internalLoadBalancerIpAddress,
+		InternalHostname:              ctxConfig.Spec.InternalHostname,
+		ExternalHostname:              ctxConfig.Spec.ExternalHostname,
+		KubeServiceName:               ctxConfig.Spec.KubeServiceName,
+		KubeLocalEndpoint:             ctxConfig.Spec.KubeLocalEndpoint,
 	}
 }
