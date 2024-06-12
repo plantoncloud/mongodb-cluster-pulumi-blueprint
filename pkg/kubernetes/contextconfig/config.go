@@ -3,6 +3,7 @@ package contextconfig
 import (
 	code2cloudenvironmentmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/environment/model"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubecluster/enums/kubernetesworkloadingresstype"
+	plantoncloudmongodbmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/mongodbcluster/model"
 	"github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 )
@@ -12,11 +13,11 @@ const (
 )
 
 type ContextConfig struct {
-	Spec   *ContextConfigSpec
-	Status *ContextConfigStatus
+	Spec   *Spec
+	Status *Status
 }
 
-type ContextConfigSpec struct {
+type Spec struct {
 	KubeProvider       *kubernetes.Provider
 	ResourceId         string
 	ResourceName       string
@@ -28,36 +29,20 @@ type ContextConfigSpec struct {
 	IngressType        kubernetesworkloadingresstype.KubernetesWorkloadIngressType
 	EndpointDomainName string
 	EnvDomainName      string
+	ContainerSpec      *plantoncloudmongodbmodel.MongodbClusterSpecKubernetesSpecMongodbContainerSpec
+	CustomHelmValues   map[string]string
+	InternalHostname   string
+	ExternalHostname   string
+	KubeServiceName    string
+	KubeLocalEndpoint  string
 }
 
-type ContextConfigStatus struct {
+type Status struct {
 	AddedResources *AddedResources
-	OutputKeyNames *OutputKeyNames
-	OutputValues   *OutputValues
 }
 
 type AddedResources struct {
-	Namespace *kubernetescorev1.Namespace
-}
-
-type OutputKeyNames struct {
-	IngressEndpoint               string
-	RootPasswordSecret            string
-	RootUsername                  string
-	KubeServiceName               string
-	KubeEndpoint                  string
-	KubeForwardCommand            string
-	LoadBalancerInternalIpAddress string
-	LoadBalancerExternalIpAddress string
-	Namespace                     string
-}
-
-type OutputValues struct {
-	IngressEndpoint    string
-	RootPasswordSecret string
-	RootUsername       string
-	KubeServiceName    string
-	KubeEndpoint       string
-	KubeForwardCommand string
-	Namespace          string
+	Namespace                   *kubernetescorev1.Namespace
+	LoadBalancerExternalService *kubernetescorev1.Service
+	LoadBalancerInternalService *kubernetescorev1.Service
 }

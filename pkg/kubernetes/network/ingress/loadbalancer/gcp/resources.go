@@ -4,86 +4,78 @@ import (
 	"github.com/pkg/errors"
 	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
 	mongodbloadbalancercommon "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/loadbalancer/common"
-	mongodbnetutilshostname "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network/ingress/netutils/hostname"
-	pulumicommonsloadbalancerservice "github.com/plantoncloud/pulumi-blueprint-commons/pkg/kubernetes/loadbalancer/service"
 	pulumikubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	v1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func Resources(ctx *pulumi.Context) error {
+func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 	// Create a Kubernetes Service of type LoadBalancer
-	if err := addExternal(ctx); err != nil {
-		return errors.Wrap(err, "failed to add external load balancer")
+	externalLoadBalancerService, err := addExternal(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to add external load balancer")
 	}
-	if err := addInternal(ctx); err != nil {
-		return errors.Wrap(err, "failed to add internal load balancer")
+	internalLoadBalancerService, err := addInternal(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to add internal load balancer")
 	}
-	return nil
-}
-
-func addExternal(ctx *pulumi.Context) error {
 
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
-	var resourceId = ctxConfig.Spec.ResourceId
-	var nameSpace = ctxConfig.Status.AddedResources.Namespace
+	addLoadBalancerExternalServiceToContext(&ctxConfig, externalLoadBalancerService)
+	addLoadBalancerInternalServiceToContext(&ctxConfig, internalLoadBalancerService)
+	ctx = ctx.WithValue(mongodbcontextconfig.Key, ctxConfig)
 
-	hostname := mongodbnetutilshostname.GetExternalHostname(resourceId, ctxConfig.Spec.EnvironmentInfo.EnvironmentName, ctxConfig.Spec.EndpointDomainName)
+	return ctx, nil
+}
+
+func addExternal(ctx *pulumi.Context) (*pulumikubernetescorev1.Service, error) {
+	i := extractInput(ctx)
 	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
 		mongodbloadbalancercommon.ExternalLoadBalancerServiceName,
-		getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.ExternalLoadBalancerServiceName, hostname), pulumi.Parent(nameSpace))
+		getLoadBalancerServiceArgs(i, mongodbloadbalancercommon.ExternalLoadBalancerServiceName, i.ExternalEndpoint),
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Parent(i.Namespace))
 	if err != nil {
-		return errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+		return nil, errors.Wrap(err, "failed to create kubernetes service of type load balancer")
 	}
-
-	var ipAddress = pulumicommonsloadbalancerservice.GetIpAddress(addedKubeService)
-	ctx.Export(ctxConfig.Status.OutputKeyNames.LoadBalancerExternalIpAddress, pulumi.String(ipAddress))
-	return nil
+	return addedKubeService, nil
 }
 
-func addInternal(ctx *pulumi.Context) error {
-	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
-
-	var resourceId = ctxConfig.Spec.ResourceId
-	var nameSpace = ctxConfig.Status.AddedResources.Namespace
-
-	hostname := mongodbnetutilshostname.GetInternalHostname(resourceId, ctxConfig.Spec.EnvironmentInfo.EnvironmentName, ctxConfig.Spec.EndpointDomainName)
+func addInternal(ctx *pulumi.Context) (*pulumikubernetescorev1.Service, error) {
+	i := extractInput(ctx)
 	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
 		mongodbloadbalancercommon.InternalLoadBalancerServiceName,
-		getInternalLoadBalancerServiceArgs(ctxConfig, hostname, nameSpace), pulumi.Parent(nameSpace))
+		getInternalLoadBalancerServiceArgs(i, i.InternalEndpoint, i.Namespace),
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Parent(i.Namespace))
 	if err != nil {
-		return errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+		return nil, errors.Wrap(err, "failed to create kubernetes service of type load balancer")
 	}
-
-	var ipAddress = pulumicommonsloadbalancerservice.GetIpAddress(addedKubeService)
-	ctx.Export(ctxConfig.Status.OutputKeyNames.LoadBalancerInternalIpAddress, pulumi.String(ipAddress))
-	return nil
+	return addedKubeService, nil
 }
 
-func getInternalLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, hostname string, namespace *pulumikubernetescorev1.Namespace) *pulumikubernetescorev1.ServiceArgs {
-	resp := getLoadBalancerServiceArgs(ctxConfig, mongodbloadbalancercommon.InternalLoadBalancerServiceName, hostname)
+func getInternalLoadBalancerServiceArgs(i *input, hostname string, namespace *pulumikubernetescorev1.Namespace) *pulumikubernetescorev1.ServiceArgs {
+	resp := getLoadBalancerServiceArgs(i, mongodbloadbalancercommon.InternalLoadBalancerServiceName, hostname)
 	resp.Metadata = &v1.ObjectMetaArgs{
 		Name:      pulumi.String(mongodbloadbalancercommon.InternalLoadBalancerServiceName),
 		Namespace: namespace.Metadata.Name(),
 		Labels:    namespace.Metadata.Labels(),
 		Annotations: pulumi.StringMap{
 			"cloud.google.com/load-balancer-type":       pulumi.String("Internal"),
-			"planton.cloud/endpoint-domain-name":        pulumi.String(ctxConfig.Spec.EndpointDomainName),
+			"planton.cloud/endpoint-domain-name":        pulumi.String(i.EndpointDomainName),
 			"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname),
 		},
 	}
 	return resp
 }
 
-func getLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, serviceName string, hostname string) *pulumikubernetescorev1.ServiceArgs {
+func getLoadBalancerServiceArgs(i *input, serviceName string, hostname string) *pulumikubernetescorev1.ServiceArgs {
 	return &pulumikubernetescorev1.ServiceArgs{
 		Metadata: &v1.ObjectMetaArgs{
 			Name:      pulumi.String(serviceName),
-			Namespace: ctxConfig.Status.AddedResources.Namespace.Metadata.Name(),
-			Labels:    ctxConfig.Status.AddedResources.Namespace.Metadata.Labels(),
+			Namespace: i.Namespace.Metadata.Name().Elem(),
+			Labels:    i.Namespace.Metadata.Labels(),
 			Annotations: pulumi.StringMap{
-				"planton.cloud/endpoint-domain-name":        pulumi.String(ctxConfig.Spec.EndpointDomainName),
+				"planton.cloud/endpoint-domain-name":        pulumi.String(i.EndpointDomainName),
 				"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname)}},
 		Spec: &pulumikubernetescorev1.ServiceSpecArgs{
 			Type: pulumi.String("LoadBalancer"), // Service type is LoadBalancer
@@ -97,9 +89,29 @@ func getLoadBalancerServiceArgs(ctxConfig mongodbcontextconfig.ContextConfig, se
 			},
 			Selector: pulumi.StringMap{
 				"app.kubernetes.io/component": pulumi.String("mongodb"),
-				"app.kubernetes.io/instance":  pulumi.String(ctxConfig.Spec.ResourceId),
-				"app.kubernetes.io/name":      pulumi.String(ctxConfig.Spec.ResourceName),
+				"app.kubernetes.io/instance":  pulumi.String(i.ResourceId),
+				"app.kubernetes.io/name":      pulumi.String(i.ResourceName),
 			},
 		},
 	}
+}
+
+func addLoadBalancerExternalServiceToContext(existingConfig *mongodbcontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &mongodbcontextconfig.AddedResources{
+			LoadBalancerExternalService: loadBalancerService,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.LoadBalancerExternalService = loadBalancerService
+}
+
+func addLoadBalancerInternalServiceToContext(existingConfig *mongodbcontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &mongodbcontextconfig.AddedResources{
+			LoadBalancerInternalService: loadBalancerService,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.LoadBalancerInternalService = loadBalancerService
 }

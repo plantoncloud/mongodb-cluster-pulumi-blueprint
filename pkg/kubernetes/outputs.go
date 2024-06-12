@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/outputs"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/org"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/stack/output/backend"
 
@@ -31,13 +32,13 @@ func OutputMapTransformer(stackOutput map[string]interface{}, input *mongodbclus
 	return &mongodbclusterstackmodel.MongodbClusterKubernetesStackOutputs{
 		MongodbClusterStatus: &mongodbclustermodel.MongodbClusterStatus{
 			Kubernetes: &mongodbclustermodel.MongodbClusterStatusKubernetesStatus{
-				Namespace:              backend.GetVal(stackOutput, GetNamespaceNameOutputName()),
-				RootUsername:           backend.GetVal(stackOutput, GetRootUsernameOutputName()),
-				RootPasswordSecretName: backend.GetVal(stackOutput, GetRootPasswordOutputName()),
-				//Service:                backend.GetVal(stackOutput, GetKubeServiceNameOutputName()),
-				//PortForwardCommand:     backend.GetVal(stackOutput, GetKubePortForwardCommandOutputName()),
-				//KubeEndpoint:           backend.GetVal(stackOutput, GetKubernetesEndpointOutputName()),
-				//IngressEndpoint:        backend.GetVal(stackOutput, GetIngressEndpointOutputName()),
+				Namespace:              backend.GetVal(stackOutput, outputs.GetNamespaceNameOutputName()),
+				RootUsername:           backend.GetVal(stackOutput, outputs.GetRootUsernameOutputName()),
+				RootPasswordSecretName: backend.GetVal(stackOutput, outputs.GetRootPasswordSecretOutputName()),
+				Service:                backend.GetVal(stackOutput, outputs.GetKubeServiceNameOutputName()),
+				PortForwardCommand:     backend.GetVal(stackOutput, outputs.GetKubePortForwardCommandOutputName()),
+				KubeEndpoint:           backend.GetVal(stackOutput, outputs.GetKubeEndpointOutputName()),
+				IngressEndpoint:        backend.GetVal(stackOutput, outputs.GetIngressEndpointOutputName()),
 			},
 		},
 	}

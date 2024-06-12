@@ -8,30 +8,43 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func Resources(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
+func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 	namespace, err := addNamespace(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to add namespace")
 	}
-	return namespace, nil
-}
-
-func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
 
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
-	ns, err := kubernetescorev1.NewNamespace(ctx, ctxConfig.Spec.NamespaceName, &kubernetescorev1.NamespaceArgs{
+	addNamespaceToContext(&ctxConfig, namespace)
+	ctx = ctx.WithValue(mongodbcontextconfig.Key, ctxConfig)
+	return ctx, nil
+}
+
+func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
+	var i = extractInput(ctx)
+
+	ns, err := kubernetescorev1.NewNamespace(ctx, i.NamespaceName, &kubernetescorev1.NamespaceArgs{
 		ApiVersion: pulumi.String("v1"),
-		Kind:       pulumi.String("AddedNamespace"),
+		Kind:       pulumi.String("Namespace"),
 		Metadata: metav1.ObjectMetaPtrInput(&metav1.ObjectMetaArgs{
-			Name:   pulumi.String(ctxConfig.Spec.NamespaceName),
-			Labels: pulumi.ToStringMap(ctxConfig.Spec.Labels),
+			Name:   pulumi.String(i.NamespaceName),
+			Labels: pulumi.ToStringMap(i.Labels),
 		}),
-	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "3m", Update: "3m", Delete: "3m"}),
-		pulumi.Provider(ctxConfig.Spec.KubeProvider))
+	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "5s", Update: "5s", Delete: "5s"}),
+		pulumi.Provider(i.KubeProvider))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to add %s namespace", ctxConfig.Spec.NamespaceName)
+		return nil, errors.Wrapf(err, "failed to add %s namespace", i.NamespaceName)
 	}
-	ctx.Export(ctxConfig.Status.OutputKeyNames.Namespace, pulumi.String(ctxConfig.Status.OutputValues.Namespace))
 	return ns, nil
+}
+
+func addNamespaceToContext(existingConfig *mongodbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &mongodbcontextconfig.AddedResources{
+			Namespace: namespace,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.Namespace = namespace
 }

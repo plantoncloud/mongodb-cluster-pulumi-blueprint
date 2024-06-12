@@ -6,6 +6,7 @@ import (
 	mongodbclusterresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/mongodbcluster"
 	mongodbnamespaceresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/namespace"
 	mongodbnetworkresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network"
+	mongodboutputs "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/outputs"
 	model "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/mongodbcluster/stack/kubernetes/model"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -18,8 +19,6 @@ type ResourceStack struct {
 
 func (resourceStack *ResourceStack) Resources(ctx *pulumi.Context) error {
 	// https://artifacthub.io/packages/helm/bitnami/mongodb
-	var mongodbCluster = resourceStack.Input.ResourceInput.MongodbCluster
-
 	var ctxConfig, err = loadConfig(ctx, resourceStack)
 	if err != nil {
 		return errors.Wrap(err, "failed to initiate context config")
@@ -27,27 +26,25 @@ func (resourceStack *ResourceStack) Resources(ctx *pulumi.Context) error {
 	ctx = ctx.WithValue(mongodbcontextconfig.Key, *ctxConfig)
 
 	// Create the namespace resource
-	addedNameSpace, err := mongodbnamespaceresources.Resources(ctx)
+	ctx, err = mongodbnamespaceresources.Resources(ctx)
 	if err != nil {
-		return err
-	}
-
-	AddNameSpace(ctxConfig, addedNameSpace)
-	ctx = ctx.WithValue(mongodbcontextconfig.Key, *ctxConfig)
-
-	// Deploying a Mongodb Helm chart from the Helm repository.
-	err = mongodbclusterresources.Resources(ctx, &mongodbclusterresources.Input{
-		ContainerSpec: mongodbCluster.Spec.Kubernetes.MongodbContainer,
-		Values:        mongodbCluster.Spec.HelmValues,
-	})
-	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create namespace resource")
 	}
 
 	// Deploying a Mongodb Helm chart from the Helm repository.
-	err = mongodbnetworkresources.Resources(ctx)
+	err = mongodbclusterresources.Resources(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create mongodb cluster")
+	}
+
+	ctx, err = mongodbnetworkresources.Resources(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to create mongodb network resources")
+	}
+
+	err = mongodboutputs.Export(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to export mongodb cluster outputs")
 	}
 
 	return nil
