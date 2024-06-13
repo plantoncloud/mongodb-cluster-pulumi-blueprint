@@ -9,9 +9,9 @@ import (
 func getHelmValues(i *input) pulumi.Map {
 	// https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
 	var baseValues = pulumi.Map{
-		"nameOverride":     pulumi.String(i.KubeServiceName),
-		"fullnameOverride": pulumi.String(i.KubeServiceName),
-		"resources":        containerresources.ConvertToPulumiMap(i.ContainerSpec.Resources),
+		"fullnameOverride":  pulumi.String(i.KubeServiceName),
+		"namespaceOverride": i.Namespace.Metadata.Name(),
+		"resources":         containerresources.ConvertToPulumiMap(i.ContainerSpec.Resources),
 		// todo: hard-coding this to 1 since we are only using `standalone` architecture,
 		// need to revisit this to handle `replicaSet` architecture
 		"replicaCount": pulumi.Int(1),

@@ -6,7 +6,7 @@ import (
 )
 
 type input struct {
-	IsIngressEnabled bool
+	IsIngressEnabled   bool
 	EndpointDomainName string
 }
 
@@ -14,7 +14,7 @@ func extractInput(ctx *pulumi.Context) *input {
 	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
 
 	return &input{
-		IsIngressEnabled: ctxConfig.Spec.IsIngressEnabled,
+		IsIngressEnabled:   ctxConfig.Spec.IsIngressEnabled,
 		EndpointDomainName: ctxConfig.Spec.EndpointDomainName,
 	}
 }
