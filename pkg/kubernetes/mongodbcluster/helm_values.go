@@ -22,6 +22,9 @@ func getHelmValues(i *input) pulumi.Map {
 		"podLabels":      pulumi.ToStringMap(i.Labels),
 		"commonLabels":   pulumi.ToStringMap(i.Labels),
 		"useStatefulSet": pulumi.Bool(true),
+		"auth": pulumi.Map{
+			"existingSecret": pulumi.String(i.KubeServiceName),
+		},
 	}
 	mergemaps.MergeMapToPulumiMap(baseValues, i.CustomHelmValues)
 	return baseValues
