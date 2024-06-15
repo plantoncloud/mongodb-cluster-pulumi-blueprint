@@ -27,13 +27,23 @@ func Resources(ctx *pulumi.Context) error {
 	gatewayObject := buildGatewayObject(i)
 	resourceName := fmt.Sprintf("gateway-%s", gatewayObject.Name)
 	manifestPath := filepath.Join(i.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
+
 	if err := manifest.Create(manifestPath, gatewayObject); err != nil {
 		return errors.Wrapf(err, "failed to create %s manifest file", manifestPath)
 	}
 
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName,
-		&pulumik8syaml.ConfigFileArgs{File: manifestPath},
-		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Provider(i.KubeProvider))
+		&pulumik8syaml.ConfigFileArgs{
+			File: manifestPath,
+		},
+		pulumi.Timeouts(&pulumi.CustomTimeouts{
+			Create: "30s",
+			Update: "30s",
+			Delete: "30s",
+		}),
+		pulumi.Provider(i.KubeProvider),
+		pulumi.IgnoreChanges([]string{"status"}),
+	)
 	if err != nil {
 		return errors.Wrap(err, "failed to add gateway manifest")
 	}

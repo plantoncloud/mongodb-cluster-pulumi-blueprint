@@ -17,11 +17,12 @@ func addHelmChart(ctx *pulumi.Context) error {
 	var i = extractInput(ctx)
 
 	var helmValues = getHelmValues(i)
+	ctx.Export("helm-values", helmValues)
 	// Deploying a Mongodb Helm chart from the Helm repository.
 	_, err := helmv3.NewChart(ctx, i.ResourceId, helmv3.ChartArgs{
 		Chart:     pulumi.String("mongodb"),
 		Version:   pulumi.String("15.1.4"), // Use the Helm chart version you want to install
-		Namespace: i.Namespace.Metadata.Name().Elem(),
+		Namespace: pulumi.String("mdb-planton-cloud-prod-test-ingress-controller"),
 		Values:    helmValues,
 		//if you need to add the repository, you can specify `repo url`:
 		// The URL for the Helm chart repository

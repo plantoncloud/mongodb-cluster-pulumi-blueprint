@@ -7,6 +7,8 @@ import (
 	mongodbnamespaceresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/namespace"
 	mongodbnetworkresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/network"
 	mongodboutputs "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/outputs"
+	mongodbpasswordresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/password"
+	mongodbsecretresources "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/secret"
 	model "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/mongodbcluster/stack/kubernetes/model"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -29,6 +31,18 @@ func (resourceStack *ResourceStack) Resources(ctx *pulumi.Context) error {
 	ctx, err = mongodbnamespaceresources.Resources(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to create namespace resource")
+	}
+
+	// Create the random password resource
+	ctx, err = mongodbpasswordresources.Resources(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to create random password resource")
+	}
+
+	// Create the secret resource for mongo db root password
+	err = mongodbsecretresources.Resources(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to create secret resource")
 	}
 
 	// Deploying a Mongodb Helm chart from the Helm repository.
