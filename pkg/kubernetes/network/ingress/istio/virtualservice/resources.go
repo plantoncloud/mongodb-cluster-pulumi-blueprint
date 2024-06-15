@@ -33,7 +33,9 @@ func addVirtualService(ctx *pulumi.Context) error {
 	}
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{
 		File: manifestPath,
-	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.DependsOn([]pulumi.Resource{i.Namespace}), pulumi.Parent(i.Namespace))
+	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}),
+		pulumi.DependsOn([]pulumi.Resource{i.Namespace}),
+		pulumi.Parent(i.Namespace), pulumi.IgnoreChanges([]string{"status"}))
 	if err != nil {
 		return errors.Wrap(err, "failed to add virtual-service manifest")
 	}
