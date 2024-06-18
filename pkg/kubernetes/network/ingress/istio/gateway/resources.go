@@ -50,42 +50,6 @@ func Resources(ctx *pulumi.Context) error {
 	return nil
 }
 
-/*
-apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-
-	creationTimestamp: "2024-06-11T05:08:14Z"
-	generation: 1
-	labels:
-	  planton.cloud/company: planton
-	  planton.cloud/environment: planton-cloud-prod
-	  planton.cloud/product: planton-cloud
-	  planton.cloud/resource: "true"
-	  planton.cloud/resource-id: mdb-planton-cloud-prod-test-ingress-controller
-	  planton.cloud/resource-kind: mongodb_cluster
-	name: mdb-planton-cloud-prod-test-ingress-controller
-	namespace: istio-ingress
-	resourceVersion: "287570172"
-	uid: 65e9a0a6-9dba-48ad-8ce6-55b52395c8da
-
-spec:
-
-	selector:
-	  app: istio-ingress
-	  istio: ingress
-	servers:
-	- hosts:
-	  - mdb-planton-cloud-prod-test-ingress-controller.prod.planton.live
-	  name: mongodb
-	  port:
-	    name: mongodb
-	    number: 27017
-	    protocol: TLS
-	  tls:
-	    credentialName: cert-prod-planton-live
-	    mode: SIMPLE
-*/
 func buildGatewayObject(i *input) *v1beta1.Gateway {
 	return &v1beta1.Gateway{
 		TypeMeta: k8smetav1.TypeMeta{
